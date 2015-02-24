@@ -8,7 +8,13 @@
  * 	Alarm clock defines and constants
  */
 
-#define INPUT 			0x0
+/* Helper macros */
+#define INC(x,y,z) fieldIncrement(x,y,z)
+#define HR12(x) x < 12 ? x - 12 : x
+#define LZ(x) leadingZero(x)
+#define STR_AMPM(x) isAM(x) ? "AM" : "PM"
+
+#define INPUT			0x0
 #define OUTPUT			0x1
 
 #define LCD_COLS 		16
@@ -22,6 +28,8 @@
 #define MONTH_COL 		4
 #define DAY_COL 		8
 #define YEAR_COL 		11
+
+#define N_FIELD_TYPES	7
 
 const byte LCD_CONTRAST_PIN = 9;
 const byte ADJUST_SWITCH 	= 6;
@@ -50,25 +58,38 @@ typedef struct TIME_INFO {
 	String AmPm;
 } time_info;
 
+
 typedef enum VIEW_MODE {
-	V_DEFAULT, V_TIMESET, V_DATESET, V_ALARMSET
+	V_DEFAULT, V_DATESET, V_TIMESET, V_ALARMSET
 } view_mode;
 
 typedef enum FIELD_TYPE {
-	SECOND , MINUTE , HOUR,
-	AMPM   , DAY    , WDAY,
-	MONTH  , YEAR   , NONE
+	HOUR , MINUTE , AMPM , WDAY , MONTH,
+	DAY  , YEAR   , NONE
 } field_type;
 
+typedef struct FIELD_RANGE {
+	int High;
+	int Low;
+} field_range;
 
+typedef struct FIELD_DATA {
+	field_type FieldType;
+	int Column;
+	field_range Range;
+}field_data;
 
-/*
- * 	The time_info structure to
- * 	seed the alarm clock with.
- */
+const field_data EDITABLE_FIELDS [N_FIELD_TYPES] = {
+	{ HOUR , HOUR_COL , { 24  , 1 } } , { MINUTE, MINUTE_COL, { 60 , 1 } },
+	{ AMPM , AMPM_COL , {}          } , { WDAY  , WDAY_COL  , { 7  , 1 } },
+	{ MONTH, MONTH_COL, { 12  , 1 } } , { DAY   , DAY_COL   , { 31 , 1 } },
+	{ YEAR , YEAR_COL , { 2020, 2015 } }
+};
+
+/* Default system time seed */
 const time_info SEED_TIME = {
-	0  , 36 , 18  , 1  ,
-	22 , 2  , 2015, "PM"
+	0  , 30 , 12  , 2  ,
+	23 , 2  , 2015, "PM"
 };
 
 /*
@@ -100,7 +121,7 @@ void 		renderAlarmset		( LiquidCrystal lcd , time_info to_render, field_type sel
 /* Time controlling functions	*/
 void		seedClock			( time_info seed, time_info * alarm, time_info * set );
 void		tick				();
-void		timeInfoIncrement	( field_type field , time_info * t);
+void		timeAdjustment		( field_type field , time_info * t);
 void		setClockTime		( time_info set );
 
 /* Input event functions		*/
@@ -110,13 +131,17 @@ view_mode 	nextView			( view_mode current );
 field_type	nextField			( view_mode current , field_type selected );
 
 /* Utility functions 			*/
-int 		calcTemp			( int sensorValue );
+int 		calcTemp			( const int sensorValue );
 int 		getColumn			( field_type f );
+int			nextEnum	 		( const int base, const int last, const int actual );
+int			fieldIncrement		( const int value, const int high, const int low);
 String 		dateFormatStr		( time_t now );
 String		dateInfoFormatStr	( time_info t );
 String 		timeFormatStr		( time_t now );
 String		timeInfoFormatStr	( time_info t);
-time_info	timeInfo			( time_t t );
-
-
+String		leadingZero			( const int n );
+String		dateStrBuilder		( String w, String m, String d, String y);
+String		timeStrBuilder		( String h, String m, String a);
+String		timeStrBuilder		( String h, String m, String s, String a);
+void		matchAndAdjust		( field_data match, time_info * toAdjust);
 #endif

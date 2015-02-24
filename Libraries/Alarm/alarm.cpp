@@ -19,22 +19,11 @@
  *	such as WIFI, BT, or serial port.
  */
 void seedClock(time_info seed, time_info * alarm, time_info * set) {
-	setTime (
-				seed.Hour  , seed.Minute,
-				seed.Second, seed.Day,
-				seed.Month , seed.Year
-	);
 
-	alarm->Hour = 12;
-	alarm->Minute = 30;
-	alarm->AmPm = "PM";
+	setTime( seed.Hour, seed.Minute, seed.Second,
+			 seed.Day, seed.Month , seed.Year );
 
-	*set = *alarm;
-
-	set->Wday = weekday( now() );
-	set->Day = seed.Day;
-	set->Month = seed.Month;
-	set->Year = seed.Year;
+	*alarm = *set = seed;
 }
 
 /*
@@ -131,32 +120,13 @@ void tick() {
  * @param field	The field to increment.
  * @param t		Time info pointer.
  */
-void timeInfoIncrement( field_type field , time_info *t) {
-	switch ( field ) {
-		case HOUR:
-			t->Hour = t->Hour >= 24 ? 1 : t->Hour + 1;
-			break;
-		case MINUTE:
-			t->Minute = t->Minute >= 59 ? 1 : t->Minute + 1;
-			break;
-		case AMPM:
-			t->AmPm = t->AmPm == "PM" ? "AM" : "PM";
-			break;
-		case WDAY:
-			t->Wday = t->Wday < 7 ? t->Wday + 1 : 1;
-			break;
-		case DAY:
-			t->Day = t->Day < 31 ? t->Day + 1 : 1;
-			break;
-		case MONTH:
-			t->Month = t->Month < 12 ? t->Month + 1 : 1;
-			break;
-		case YEAR:
-			t->Year = t->Year < 2020 ? t->Year + 1 : 2015;
-			break;
-		default:
-			break;
+void timeAdjustment( field_type field , time_info *t) {
 
+	for(int i = 0; i < N_FIELD_TYPES; i++) {
+		if(EDITABLE_FIELDS[i].FieldType == field) {
+			field_data data = EDITABLE_FIELDS[i];
+			matchAndAdjust(data, t);
+		}
 	}
 }
 /*
@@ -166,11 +136,8 @@ void timeInfoIncrement( field_type field , time_info *t) {
  * 	@param set	A time.
  */
 void setClockTime(time_info set) {
-	setTime (
-				set.Hour  , set.Minute,
-				set.Second, set.Day,
-				set.Month , set.Year
-	);
+	setTime ( set.Hour, set.Minute, set.Second,
+			  set.Day,set.Month, set.Year );
 }
 /*
  * 	Checks for an active switch and returns
@@ -189,6 +156,7 @@ byte checkSwitchEvent() {
 	} else if ( digitalRead( PAGE_SWITCH ) ) {
 		which = PAGE_SWITCH;
 	}
+
 	return which;
 }
 
@@ -215,18 +183,7 @@ bool isViewEditable(view_mode current) {
  * 	@return			The next view.
  */
 view_mode nextView(view_mode current) {
-	view_mode next;
-	if ( current == V_DEFAULT ) {
-		next = V_TIMESET;
-	} else if ( current == V_TIMESET ) {
-		next = V_DATESET;
-	} else if ( current == V_DATESET ) {
-		next = V_ALARMSET;
-	} else {
-		next = V_DEFAULT;
-	}
-
-	return next;
+	return (view_mode) nextEnum(V_DEFAULT, V_ALARMSET, current);
 }
 /*
  * 	Returns the next field selection based on
@@ -239,46 +196,12 @@ view_mode nextView(view_mode current) {
  */
 field_type	nextField(view_mode current, field_type selected) {
 	field_type next = NONE;
-	switch ( current ) {
-		case V_TIMESET:
-			if ( selected == NONE ) {
-				next = HOUR;
-			} else if ( selected == HOUR ) {
-				next = MINUTE;
-			} else if ( selected == MINUTE ) {
-				next = AMPM;
-			} else if ( selected == AMPM ){
-				next = HOUR;
-			}
-			break;
-		case V_ALARMSET:
-			if ( selected == NONE ) {
-				next = HOUR;
-			} else if ( selected == HOUR ) {
-				next = MINUTE;
-			} else if ( selected == MINUTE ) {
-				next = AMPM;
-			} else if ( selected == AMPM ) {
-				next = HOUR;
-			}
-			break;
-		case V_DATESET:
-			if ( selected == NONE ) {
-				next = WDAY;
-			} else if ( selected == WDAY ) {
-				next = MONTH;
-			} else if ( selected == MONTH ) {
-				next = DAY;
-			} else if ( selected == DAY ) {
-				next = YEAR;
-			} else if ( selected == YEAR ) {
-				next = WDAY;
-			}
-			break;
-		default:
-			break;
-	}
 
+	if( current == V_DATESET ) {
+		next = (field_type) nextEnum(WDAY, YEAR, selected);
+	} else if ( current != V_DEFAULT ) {
+		next = (field_type) nextEnum(HOUR, AMPM, selected);
+	}
 	return next;
 }
 /*
@@ -288,7 +211,7 @@ field_type	nextField(view_mode current, field_type selected) {
  * 	@param sensorValue	The value of temperature sensor.
  * 	@return				The calculated temperature.
  */
-int calcTemp(int sensorValue) {
+int calcTemp(const int sensorValue) {
 	float volts   = ( sensorValue / 1024.0 ) * 5.0;
 	float celsius = ( volts - 0.5 ) * 100;
 	return trunc( celsius * 1.8 ) + 32;
@@ -305,25 +228,13 @@ int calcTemp(int sensorValue) {
  * 	@return		A formatted date string.
  */
 String dateFormatStr(time_t now) {
-	String weekDay  = String( STR_WEEKDAY[weekday(now)] );
-	String monthStr = String( STR_MONTH[month(now)] );
-	int iDay  = day( now );
-	int iYear = year( now );
 
-	String dayFrmt  = "";
-	iDay < 10 ? dayFrmt.concat('0') : 0;
-	dayFrmt.concat(iDay);
+	int theDay = day(now);
+	String theWday = STR_WEEKDAY[weekday(now)];
+	String theMonth = STR_MONTH[month(now)];
+	String theYear = String(year(now));
 
-	String yearFrmt = String( iYear );
-
-	String ret = weekDay;
-	ret.concat(" ");
-	ret.concat( monthStr );
-	ret.concat(" ");
-	ret.concat( dayFrmt );
-	ret.concat(" ");
-	ret.concat( yearFrmt );
-	return ret;
+	return dateStrBuilder(theWday,theMonth,LZ(theDay),theYear);
 }
 
 /*
@@ -342,88 +253,112 @@ String timeFormatStr(time_t now) {
 	int min = minute( now );
 	int sec = second( now );
 
-	String hrFrmt = "";
-	hr < 10 ? hrFrmt.concat('0') : 0;
-	hrFrmt.concat(hr);
-
-	String minFrmt = "";
-	min < 10 ? minFrmt.concat('0') : 0;
-	minFrmt.concat( min );
-
-	String secFrmt = "";
-	sec < 10 ? secFrmt.concat('0') : 0;
-	secFrmt.concat( sec );
-
-	String ampm = isAM( now ) ? "AM" : "PM";
-
-	String ret = hrFrmt;
-	ret.concat(":");
-	ret.concat( minFrmt );
-	ret.concat(":");
-	ret.concat( secFrmt );
-	ret.concat(" ");
-	ret.concat( ampm );
-	return ret;
+	return timeStrBuilder( LZ(hr), LZ(min), LZ(sec), STR_AMPM(now) );
 }
 
+/*
+ * 	Utility function for converting a
+ * 	time info structure to a printable
+ * 	date format.
+ *
+ * 	@param t	The time info.
+ * 	@return		The formatted string.
+ */
 String dateInfoFormatStr(time_info t) {
-	String weekDay  = String( STR_WEEKDAY[t.Wday] );
-	String monthStr = String( STR_MONTH[t.Month] );
 
-	String dayFrmt  = "";
-	t.Day < 10 ? dayFrmt.concat('0') : 0;
-	dayFrmt.concat(t.Day);
+	int theDay = t.Day;
+	String theWday = STR_WEEKDAY[t.Wday];
+	String theMonth = STR_MONTH[t.Month];
+	String theYear = String(t.Year);
 
-	String yearFrmt = String( t.Year );
-
-	String ret = weekDay;
-	ret.concat(" ");
-	ret.concat( monthStr );
-	ret.concat(" ");
-	ret.concat( dayFrmt );
-	ret.concat(" ");
-	ret.concat( yearFrmt );
-	return ret;
+	return dateStrBuilder(theWday,theMonth,LZ(theDay),theYear);
 }
+
+/*
+ * 	Utility function for converting a
+ * 	time info structure to a printable
+ * 	time format.
+ *
+ * 	@param t	The time info.
+ * 	@return		The formatted string.
+ */
 String timeInfoFormatStr(time_info t) {
 
-	int hr  = t.Hour > 12 ? t.Hour - 12 : t.Hour;
+	int hr  = HR12(t.Hour);
 	int min = t.Minute;
 
-	String hrFrmt = "";
-	hr < 10 ? hrFrmt.concat('0') : 0;
-	hrFrmt.concat(hr);
+	return timeStrBuilder( LZ(hr), LZ(min), t.AmPm);
+}
 
-	String minFrmt = "";
-	min < 10 ? minFrmt.concat('0') : 0;
-	minFrmt.concat( min );
+/*
+ * 	Utility function for converting
+ * 	a number to a string where a
+ * 	leading zero is required for
+ * 	formatting purposes
+ *
+ * 	@param n	The number to convert
+ * 	@return		The string representation of n.
+ */
+String leadingZero( const int n ) {
+	String s = "";
+	n < 10 ? s.concat('0') : 0;
+	s.concat(n);
+	return s;
+}
 
-	String ampm = t.AmPm;
+/*
+ * 	Utility function for building up a formatted time
+ * 	string.  Exists because doing string concatenation
+ * 	with the String object is ugly as hell.
+ *
+ * 	@param h	The hour.
+ * 	@param m	The minute.
+ * 	@param s	The second. (optional)
+ * 	@param a	AM/PM
+ * 	@return		The formatted string.
+ */
+String timeStrBuilder(String h, String m, String s, String a) {
+	String str = h;
+	str += ":";
+	str += m;
+	str += ":";
+	str += s;
+	str += " ";
+	str += a;
+	return str;
+}
 
-	String ret = hrFrmt;
-	ret.concat(":");
-	ret.concat( minFrmt );
-	ret.concat(" ");
-	ret.concat( ampm );
-	return ret;
+/* See above */
+String timeStrBuilder(String h, String m, String a) {
+	String str = h;
+	str += ":";
+	str += m;
+	str += " ";
+	str += a;
+	return str;
 }
 /*
- * 	Utility function for converting a time_t
- * 	into a time_info structure.
+ * 	Utility function for building up a formatted date
+ * 	string.  Exists because doing string concatenation
+ * 	with the String object is ugly as hell.
  *
- * 	@param t	A time.
- * 	@return		A time_info structure.
+ * 	@param w	The week day.
+ * 	@param m	The month.
+ * 	@param d	The day.
+ * 	@param y	The year.
+ * 	@return		The formatted string.
  */
-time_info timeInfo(time_t t) {
-	time_info theInfo;
-	theInfo.Second = second(t);
-	theInfo.Minute = minute(t);
-	theInfo.Hour = hour(t);
-	theInfo.Wday = weekday(t);
-	theInfo.Day = day(t);
-	theInfo.Year = year(t);
-	return theInfo;
+String dateStrBuilder(String w, String m, String d, String y) {
+	String str = w;
+	str += " ";
+	str += m;
+	str += " ";
+	str += d;
+	str += " ";
+	str += y;
+	return str;
 }
+
 /*
  * 	Gets the LCD column where the specified
  * 	field begins.  Used for blink indicator.
@@ -433,32 +368,77 @@ time_info timeInfo(time_t t) {
  */
 int getColumn(field_type f) {
 	int theColumn = 0;
+	for(int i = 0; i < N_FIELD_TYPES; i++) {
+		if ( EDITABLE_FIELDS[i].FieldType == f) {
+			theColumn = EDITABLE_FIELDS[i].Column;
+			break;
+		}
+	}
+	return theColumn;
+}
 
-	switch ( f ) {
-		case WDAY:
-			theColumn = WDAY_COL;
-			break;
-		case MONTH:
-			theColumn = MONTH_COL;
-			break;
-		case DAY:
-			theColumn = DAY_COL;
-			break;
-		case YEAR:
-			theColumn = YEAR_COL;
-			break;
+/*
+ * 	Utility function which is useful for
+ * 	cycling through an enum, for instance
+ * 	field types or view modes.
+ *
+ * 	@param base	The base item.
+ * 	@param last	The last item.
+ * 	@param actual	The current item.
+ * 	@return		the next item, else base.
+ */
+int nextEnum ( const int base, const int last, const int actual ) {
+	return actual < last ? actual + 1 : base;
+}
+
+/*
+ * 	Utility function for incrementing a field value
+ * 	within a range between high and low.
+ *
+ * 	@param value	The fields current value
+ * 	@param high		Range max.
+ * 	@param low		Range min.
+ * 	@return			The next field value
+ */
+int	fieldIncrement(const int value, const int high, const int low) {
+	return value < high ? value + 1 : low;
+}
+
+/*
+ *	This routine was part of the timeAdjustment function,
+ *	It's ugly and stupid but until I find a better way
+ *	of doing this, I'll hide it at the bottom of the source
+ *	file.
+ *
+ *	@param match	The field to match.
+ *	@param range	The fields range.
+ *	@param toAdjust	Pointer to time info structure.
+ */
+void matchAndAdjust(field_data match, time_info * toAdjust) {
+	switch (match.FieldType) {
 		case HOUR:
-			theColumn = HOUR_COL;
+			toAdjust->Hour = INC(toAdjust->Hour,match.Range.High,match.Range.Low);
 			break;
 		case MINUTE:
-			theColumn = MINUTE_COL;
+			toAdjust->Minute = INC(toAdjust->Minute, match.Range.High, match.Range.Low );
 			break;
 		case AMPM:
-			theColumn = AMPM_COL;
+			toAdjust->AmPm = toAdjust->AmPm == "AM" ? "PM" : "AM";
 			break;
-		default:
+		case WDAY:
+			toAdjust->Wday = INC( toAdjust->Wday, match.Range.High, match.Range.Low );
+			break;
+		case DAY:
+			toAdjust->Day = INC( toAdjust->Day, match.Range.High, match.Range.Low );
+			break;
+		case MONTH:
+			toAdjust->Month = INC( toAdjust->Month, match.Range.High, match.Range.Low );
+			break;
+		case YEAR:
+			toAdjust->Year = INC( toAdjust->Year, match.Range.High, match.Range.Low );
+			break;
+		case NONE:
+			// THERE ECLIPSE ARE YOU HAPPY NOW?
 			break;
 	}
-
-	return theColumn;
 }

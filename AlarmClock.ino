@@ -71,11 +71,12 @@ void loop() {
 		case PAGE_SWITCH:
 			lcd.noBlink();
 			lcd.clear();
+			gSelectedField = NONE;
 			gCurrentView = nextView(gCurrentView);
 			break;
 	}
 
-	// Update and collect system time
+	// Update and collect system time info
 	tick();
 	time_t current = now();
 
@@ -84,9 +85,9 @@ void loop() {
 
 	if( hadChanges && (gCurrentView != V_DEFAULT) ) {
 		if( gCurrentView == V_ALARMSET ) {
-			timeInfoIncrement( gSelectedField, &gAlarmTime );
+			timeAdjustment( gSelectedField, &gAlarmTime );
 		} else {
-			timeInfoIncrement( gSelectedField, &gSetTime );
+			timeAdjustment( gSelectedField, &gSetTime );
 			setClockTime( gSetTime );
 		}
 	}
@@ -94,12 +95,15 @@ void loop() {
 	// Render the updated view to the screen
 	switch ( gCurrentView ) {
 		case V_TIMESET:
+			gSelectedField = gSelectedField == NONE ? HOUR : gSelectedField;
 			renderTimeset( lcd , gSetTime, gSelectedField );
 			break;
 		case V_DATESET:
+			gSelectedField = gSelectedField == NONE ? WDAY : gSelectedField;
 			renderDateset( lcd, gSetTime, gSelectedField );
 			break;
 		case V_ALARMSET:
+			gSelectedField = gSelectedField == NONE ? HOUR : gSelectedField;
 			renderAlarmset( lcd , gAlarmTime, gSelectedField );
 			break;
 		default:
