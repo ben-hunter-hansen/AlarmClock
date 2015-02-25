@@ -20,8 +20,8 @@
  */
 void seedClock(time_info seed, time_info * alarm, time_info * set) {
 
-	setTime( seed.Hour, seed.Minute, seed.Second,
-			 seed.Day, seed.Month , seed.Year );
+	setTime(seed.Hour, seed.Minute, seed.Second, seed.Day, seed.Month,
+			seed.Year);
 
 	*alarm = *set = seed;
 }
@@ -34,11 +34,11 @@ void seedClock(time_info seed, time_info * alarm, time_info * set) {
  */
 void renderDefault(LiquidCrystal lcd, time_t to_render) {
 
-	lcd.setCursor( 0 , 0 );
-	lcd.print( dateFormatStr( to_render ) );
+	lcd.setCursor(0, 0);
+	lcd.print(dateFormatStr(to_render));
 
-	lcd.setCursor( 0 , 1);
-	lcd.print( timeFormatStr( to_render ) );
+	lcd.setCursor(0, 1);
+	lcd.print(timeFormatStr(to_render));
 }
 
 /*
@@ -48,16 +48,17 @@ void renderDefault(LiquidCrystal lcd, time_t to_render) {
  * 	@param selected 	Currently selected field.
  * 	@param to_render	A time.
  */
-void renderTimeset(LiquidCrystal lcd, time_info to_render, field_type selected) {
+void renderTimeset(LiquidCrystal lcd, time_info to_render,
+		field_type selected) {
 
-	lcd.setCursor( 0 , 0 );
+	lcd.setCursor(0, 0);
 	lcd.print("Set clock time");
 
-	lcd.setCursor( 0 , 1 );
-	lcd.print( timeInfoFormatStr ( to_render ) );
+	lcd.setCursor(0, 1);
+	lcd.print(timeInfoFormatStr(to_render));
 
-	if ( selected != NONE ) {
-		lcd.setCursor( getColumn( selected ), 1 );
+	if (selected != NONE) {
+		lcd.setCursor(getColumn(selected), 1);
 		lcd.blink();
 	}
 }
@@ -69,16 +70,17 @@ void renderTimeset(LiquidCrystal lcd, time_info to_render, field_type selected) 
  * 	@param selected 	Currently selected field.
  * 	@param to_render	A time.
  */
-void renderDateset(LiquidCrystal lcd, time_info to_render, field_type selected) {
+void renderDateset(LiquidCrystal lcd, time_info to_render,
+		field_type selected) {
 
-	lcd.setCursor( 0 , 0 );
+	lcd.setCursor(0, 0);
 	lcd.print("Set clock date");
 
-	lcd.setCursor( 0 , 1 );
-	lcd.print( dateInfoFormatStr ( to_render ) );
+	lcd.setCursor(0, 1);
+	lcd.print(dateInfoFormatStr(to_render));
 
-	if ( selected != NONE ) {
-		lcd.setCursor( getColumn( selected ), 1 );
+	if (selected != NONE) {
+		lcd.setCursor(getColumn(selected), 1);
 		lcd.blink();
 	}
 }
@@ -89,15 +91,16 @@ void renderDateset(LiquidCrystal lcd, time_info to_render, field_type selected) 
  * 	@param lcd			LCD Object.
  * 	@param to_render	Alarm time.
  */
-void renderAlarmset(LiquidCrystal lcd, time_info to_render, field_type selected) {
-	lcd.setCursor( 0 , 0 );
+void renderAlarmset(LiquidCrystal lcd, time_info to_render,
+		field_type selected) {
+	lcd.setCursor(0, 0);
 	lcd.print("Set alarm time");
 
-	lcd.setCursor( 0 , 1 );
-	lcd.print( timeInfoFormatStr( to_render ) );
+	lcd.setCursor(0, 1);
+	lcd.print(timeInfoFormatStr(to_render));
 
-	if ( selected != NONE ) {
-		lcd.setCursor( getColumn( selected ), 1 );
+	if (selected != NONE) {
+		lcd.setCursor(getColumn(selected), 1);
 		lcd.blink();
 	}
 }
@@ -110,8 +113,8 @@ void renderAlarmset(LiquidCrystal lcd, time_info to_render, field_type selected)
  *	Consult the header file for more info.
  */
 void tick() {
-	delay( 125 );
-	adjustTime( SYS_TIME_ADJUSTMENT );
+	delay(125);
+	adjustTime( SYS_TIME_ADJUSTMENT);
 }
 /*
  * Increments a date/time field value stored
@@ -120,10 +123,10 @@ void tick() {
  * @param field	The field to increment.
  * @param t		Time info pointer.
  */
-void timeAdjustment( field_type field , time_info *t) {
+void timeAdjustment(field_type field, time_info *t) {
 
-	for(int i = 0; i < N_FIELD_TYPES; i++) {
-		if(EDITABLE_FIELDS[i].FieldType == field) {
+	for (int i = 0; i < N_FIELD_TYPES; i++) {
+		if (EDITABLE_FIELDS[i].FieldType == field) {
 			field_data data = EDITABLE_FIELDS[i];
 			matchAndAdjust(data, t);
 		}
@@ -136,8 +139,8 @@ void timeAdjustment( field_type field , time_info *t) {
  * 	@param set	A time.
  */
 void setClockTime(time_info set) {
-	setTime ( set.Hour, set.Minute, set.Second,
-			  set.Day,set.Month, set.Year );
+
+	setTime(set.Hour, set.Minute, set.Second, set.Day, set.Month, set.Year);
 }
 /*
  * 	Checks for an active switch and returns
@@ -149,11 +152,11 @@ void setClockTime(time_info set) {
 byte checkSwitchEvent() {
 	byte which = 0;
 
-	if ( digitalRead( ADJUST_SWITCH ) ) {
+	if (digitalRead(ADJUST_SWITCH)) {
 		which = ADJUST_SWITCH;
-	} else if ( digitalRead( SELECT_SWITCH ) ) {
+	} else if (digitalRead(SELECT_SWITCH)) {
 		which = SELECT_SWITCH;
-	} else if ( digitalRead( PAGE_SWITCH ) ) {
+	} else if (digitalRead(PAGE_SWITCH)) {
 		which = PAGE_SWITCH;
 	}
 
@@ -167,9 +170,7 @@ byte checkSwitchEvent() {
  * 	@return			true if editing is allowed, else false
  */
 bool isViewEditable(view_mode current) {
-	if ( current == V_TIMESET  ||
-		 current == V_ALARMSET ||
-		 current == V_DATESET ) {
+	if (current == V_TIMESET || current == V_ALARMSET || current == V_DATESET) {
 		return true;
 	} else {
 		return false;
@@ -194,12 +195,12 @@ view_mode nextView(view_mode current) {
  * 	@param selected The currently selected field.
  * 	@return			The next field selection.
  */
-field_type	nextField(view_mode current, field_type selected) {
+field_type nextField(view_mode current, field_type selected) {
 	field_type next = NONE;
 
-	if( current == V_DATESET ) {
+	if (current == V_DATESET) {
 		next = (field_type) nextEnum(WDAY, YEAR, selected);
-	} else if ( current != V_DEFAULT ) {
+	} else if (current != V_DEFAULT) {
 		next = (field_type) nextEnum(HOUR, AMPM, selected);
 	}
 	return next;
@@ -212,9 +213,9 @@ field_type	nextField(view_mode current, field_type selected) {
  * 	@return				The calculated temperature.
  */
 int calcTemp(const int sensorValue) {
-	float volts   = ( sensorValue / 1024.0 ) * 5.0;
-	float celsius = ( volts - 0.5 ) * 100;
-	return trunc( celsius * 1.8 ) + 32;
+	float volts = (sensorValue / 1024.0) * 5.0;
+	float celsius = (volts - 0.5) * 100;
+	return trunc(celsius * 1.8) + 32;
 }
 
 /*
@@ -234,7 +235,7 @@ String dateFormatStr(time_t now) {
 	String theMonth = STR_MONTH[month(now)];
 	String theYear = String(year(now));
 
-	return dateStrBuilder(theWday,theMonth,LZ(theDay),theYear);
+	return dateStrBuilder(theWday, theMonth, LZ(theDay), theYear);
 }
 
 /*
@@ -249,11 +250,11 @@ String dateFormatStr(time_t now) {
  */
 String timeFormatStr(time_t now) {
 
-	int hr  = hourFormat12( now );
-	int min = minute( now );
-	int sec = second( now );
+	int hr = hourFormat12(now);
+	int min = minute(now);
+	int sec = second(now);
 
-	return timeStrBuilder( LZ(hr), LZ(min), LZ(sec), STR_AMPM(now) );
+	return timeStrBuilder(LZ(hr), LZ(min), LZ(sec), STR_AMPM(now));
 }
 
 /*
@@ -271,7 +272,7 @@ String dateInfoFormatStr(time_info t) {
 	String theMonth = STR_MONTH[t.Month];
 	String theYear = String(t.Year);
 
-	return dateStrBuilder(theWday,theMonth,LZ(theDay),theYear);
+	return dateStrBuilder(theWday, theMonth, LZ(theDay), theYear);
 }
 
 /*
@@ -284,10 +285,10 @@ String dateInfoFormatStr(time_info t) {
  */
 String timeInfoFormatStr(time_info t) {
 
-	int hr  = HR12(t.Hour);
+	int hr = HR12(t.Hour) == 0 ? 12 : HR12(t.Hour);
 	int min = t.Minute;
 
-	return timeStrBuilder( LZ(hr), LZ(min), t.AmPm);
+	return timeStrBuilder(LZ(hr), LZ(min), t.AmPm);
 }
 
 /*
@@ -299,7 +300,7 @@ String timeInfoFormatStr(time_info t) {
  * 	@param n	The number to convert
  * 	@return		The string representation of n.
  */
-String leadingZero( const int n ) {
+String leadingZero(const int n) {
 	String s = "";
 	n < 10 ? s.concat('0') : 0;
 	s.concat(n);
@@ -368,8 +369,8 @@ String dateStrBuilder(String w, String m, String d, String y) {
  */
 int getColumn(field_type f) {
 	int theColumn = 0;
-	for(int i = 0; i < N_FIELD_TYPES; i++) {
-		if ( EDITABLE_FIELDS[i].FieldType == f) {
+	for (int i = 0; i < N_FIELD_TYPES; i++) {
+		if (EDITABLE_FIELDS[i].FieldType == f) {
 			theColumn = EDITABLE_FIELDS[i].Column;
 			break;
 		}
@@ -387,7 +388,7 @@ int getColumn(field_type f) {
  * 	@param actual	The current item.
  * 	@return		the next item, else base.
  */
-int nextEnum ( const int base, const int last, const int actual ) {
+int nextEnum(const int base, const int last, const int actual) {
 	return actual < last ? actual + 1 : base;
 }
 
@@ -400,7 +401,7 @@ int nextEnum ( const int base, const int last, const int actual ) {
  * 	@param low		Range min.
  * 	@return			The next field value
  */
-int	fieldIncrement(const int value, const int high, const int low) {
+int fieldIncrement(const int value, const int high, const int low) {
 	return value < high ? value + 1 : low;
 }
 
@@ -416,29 +417,50 @@ int	fieldIncrement(const int value, const int high, const int low) {
  */
 void matchAndAdjust(field_data match, time_info * toAdjust) {
 	switch (match.FieldType) {
-		case HOUR:
-			toAdjust->Hour = INC(toAdjust->Hour,match.Range.High,match.Range.Low);
-			break;
-		case MINUTE:
-			toAdjust->Minute = INC(toAdjust->Minute, match.Range.High, match.Range.Low );
-			break;
-		case AMPM:
-			toAdjust->AmPm = toAdjust->AmPm == "AM" ? "PM" : "AM";
-			break;
-		case WDAY:
-			toAdjust->Wday = INC( toAdjust->Wday, match.Range.High, match.Range.Low );
-			break;
-		case DAY:
-			toAdjust->Day = INC( toAdjust->Day, match.Range.High, match.Range.Low );
-			break;
-		case MONTH:
-			toAdjust->Month = INC( toAdjust->Month, match.Range.High, match.Range.Low );
-			break;
-		case YEAR:
-			toAdjust->Year = INC( toAdjust->Year, match.Range.High, match.Range.Low );
-			break;
-		case NONE:
-			// THERE ECLIPSE ARE YOU HAPPY NOW?
-			break;
+	case HOUR:
+		toAdjust->Hour = INC(toAdjust->Hour, match.Range.High, match.Range.Low);
+		break;
+	case MINUTE:
+		toAdjust->Minute = INC(toAdjust->Minute, match.Range.High,
+				match.Range.Low);
+		break;
+	case AMPM:
+		toAdjust->AmPm = toAdjust->AmPm == "AM" ? "PM" : "AM";
+		break;
+	case WDAY:
+		toAdjust->Wday = INC(toAdjust->Wday, match.Range.High, match.Range.Low);
+		break;
+	case DAY:
+		toAdjust->Day = INC(toAdjust->Day, match.Range.High, match.Range.Low);
+		break;
+	case MONTH:
+		toAdjust->Month = INC(toAdjust->Month, match.Range.High,
+				match.Range.Low);
+		break;
+	case YEAR:
+		toAdjust->Year = INC(toAdjust->Year, match.Range.High, match.Range.Low);
+		break;
+	case NONE:
+		// THERE ECLIPSE ARE YOU HAPPY NOW?
+		break;
+	}
+
+	verifyAdjustment(toAdjust);
+}
+/*
+ * 	Helper function for verifying changes to system time.
+ *
+ * 	setTime() as defined in Arduino's Time library accepts
+ * 	hours in 0-23 format and has no regard for AM or PM, so
+ * 	manually adjusting the hour field is required when the user
+ * 	toggles the am/pm field.
+ *
+ * 	@param toVerify`Pointer to the time info structure.
+ */
+void verifyAdjustment(time_info * toVerify) {
+	if ((toVerify->Hour <= 12) && (toVerify->AmPm == "PM")) {
+		toVerify->Hour += 12;
+	} else if ((toVerify->Hour >= 12) && (toVerify->AmPm == "AM")) {
+		toVerify->Hour -= 12;
 	}
 }
