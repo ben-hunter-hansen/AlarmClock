@@ -143,6 +143,19 @@ void setClockTime(time_info set) {
 	setTime(set.Hour, set.Minute, set.Second, set.Day, set.Month, set.Year);
 }
 /*
+ * 	Checks the current time against the
+ * 	set alarm time.
+ *
+ * 	@param current	The current time.
+ * 	@param alarm	The alarm time.
+ * 	@return			True if args are equal, else false.
+ */
+bool isAlarmTime(time_t current, time_info alarm) {
+	bool hoursEqual = hour(current) == alarm.Hour;
+	bool minsEqual = minute(current) == alarm.Minute;
+	return hoursEqual && minsEqual;
+}
+/*
  * 	Checks for an active switch and returns
  * 	a value which identifies the active switch or
  * 	lack thereof.
@@ -418,27 +431,27 @@ int fieldIncrement(const int value, const int high, const int low) {
 void matchAndAdjust(field_data match, time_info * toAdjust) {
 	switch (match.FieldType) {
 	case HOUR:
-		toAdjust->Hour = INC(toAdjust->Hour, match.Range.High, match.Range.Low);
+		toAdjust->Hour = F_INC(toAdjust->Hour, match.Range.High, match.Range.Low);
 		break;
 	case MINUTE:
-		toAdjust->Minute = INC(toAdjust->Minute, match.Range.High,
+		toAdjust->Minute = F_INC(toAdjust->Minute, match.Range.High,
 				match.Range.Low);
 		break;
 	case AMPM:
 		toAdjust->AmPm = toAdjust->AmPm == "AM" ? "PM" : "AM";
 		break;
 	case WDAY:
-		toAdjust->Wday = INC(toAdjust->Wday, match.Range.High, match.Range.Low);
+		toAdjust->Wday = F_INC(toAdjust->Wday, match.Range.High, match.Range.Low);
 		break;
 	case DAY:
-		toAdjust->Day = INC(toAdjust->Day, match.Range.High, match.Range.Low);
+		toAdjust->Day = F_INC(toAdjust->Day, match.Range.High, match.Range.Low);
 		break;
 	case MONTH:
-		toAdjust->Month = INC(toAdjust->Month, match.Range.High,
+		toAdjust->Month = F_INC(toAdjust->Month, match.Range.High,
 				match.Range.Low);
 		break;
 	case YEAR:
-		toAdjust->Year = INC(toAdjust->Year, match.Range.High, match.Range.Low);
+		toAdjust->Year = F_INC(toAdjust->Year, match.Range.High, match.Range.Low);
 		break;
 	case NONE:
 		// THERE ECLIPSE ARE YOU HAPPY NOW?

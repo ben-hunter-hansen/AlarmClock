@@ -5,17 +5,23 @@
 #include <LiquidCrystal.h>
 
 /*
- * 	Alarm clock defines and constants
+ *	alarm.h
+ *	Author: Ben Hansen
+ *
+ *	Interface to the alarm library.
  */
 
 /* Helper macros */
-#define INC(x,y,z) fieldIncrement(x,y,z)
+#define F_INC(x,y,z) fieldIncrement(x,y,z)
 #define HR12(x) (x > 12) ? x - 12 : x
 #define LZ(x) leadingZero(x)
 #define STR_AMPM(x) isAM(x) ? "AM" : "PM"
+#define DEF_IF_NONE(f,d) f == NONE ? d : f
 
 #define INPUT			0x0
 #define OUTPUT			0x1
+
+#define ALARM_TONE		284
 
 #define LCD_COLS 		16
 #define LCD_ROWS 		2
@@ -31,22 +37,22 @@
 
 #define N_FIELD_TYPES	7
 
-const byte LCD_CONTRAST_PIN = 9;
+const byte LCD_CONTRAST_PIN = A0;
+const byte ALARM_PIN = 8;
 const byte ADJUST_SWITCH = 6;
 const byte SELECT_SWITCH = 7;
 const byte PAGE_SWITCH = 13;
 
 /*
  *  - System time reference table -
- *	millis		seconds		adjustment
- *	1000		1			0.5
- *	500			0.5			0.25
- *	250			0.25		0.125
- *	125			0.125		0.0625
+ *	millis	seconds	adjustment
+ *	1000	1		0.5
+ *	500		0.5		0.25
+ *	250		0.25	0.125
+ *	125		0.125	0.0625
  */
 #define SYS_TIME_ADJUSTMENT 0.0625
 
-/* Alarm clock structures and enums */
 typedef struct TIME_INFO {
 	int Second;
 	int Minute;
@@ -77,11 +83,16 @@ typedef struct FIELD_DATA {
 	field_range Range;
 } field_data;
 
+/* All the editable field types and their numeric ranges */
 const field_data EDITABLE_FIELDS[N_FIELD_TYPES] = {
-		{ HOUR, HOUR_COL, { 23, 0 } }, { MINUTE, MINUTE_COL, { 60, 1 } }, {
-				AMPM, AMPM_COL, { } }, { WDAY, WDAY_COL, { 7, 1 } }, { MONTH,
-				MONTH_COL, { 12, 1 } }, { DAY, DAY_COL, { 31, 1 } }, { YEAR,
-				YEAR_COL, { 2020, 2015 } } };
+		{ HOUR, HOUR_COL, { 23, 0 } },
+		{ MINUTE, MINUTE_COL, { 60, 1 } },
+		{ AMPM, AMPM_COL, { } },
+		{ WDAY, WDAY_COL, { 7, 1 } },
+		{ MONTH,MONTH_COL, { 12, 1 } },
+		{ DAY, DAY_COL, { 31, 1 } },
+		{ YEAR, YEAR_COL, { 2020, 2015 } }
+};
 
 /* Default system time seed */
 const time_info SEED_TIME = { 0, 30, 12, 2, 23, 2, 2015, "PM" };
@@ -111,6 +122,7 @@ void seedClock(time_info seed, time_info * alarm, time_info * set);
 void tick();
 void timeAdjustment(field_type field, time_info * t);
 void setClockTime(time_info set);
+bool isAlarmTime(time_t current, time_info alarm);
 
 /* Input event functions		*/
 byte checkSwitchEvent();
@@ -133,4 +145,5 @@ String timeStrBuilder(String h, String m, String a);
 String timeStrBuilder(String h, String m, String s, String a);
 void matchAndAdjust(field_data match, time_info * toAdjust);
 void verifyAdjustment(time_info * toVerify);
+
 #endif
